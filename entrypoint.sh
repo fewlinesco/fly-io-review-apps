@@ -7,9 +7,9 @@ if [ -n "$INPUT_PATH" ]; then
   cd "$INPUT_PATH" || exit
 fi
 
-PR_NUMBER=$(jq -r .number /github/workflow/event.json)
-if [ -z "$PR_NUMBER" ]; then
-  echo "This action only supports pull_request actions."
+PR_NUMBER=${INPUT_PR_NUMBER:-$(jq -r .number /github/workflow/event.json)}
+if [ "$PR_NUMBER" = "null" ]; then
+  echo "This action requires a PR number to be passed in as an input or be run from a pull request."
   exit 1
 fi
 
