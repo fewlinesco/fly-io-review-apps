@@ -6,16 +6,19 @@ This action will create, deploy, and destroy Fly apps. Just set an Action Secret
 
 If you have an existing `fly.toml` in your repo, this action will copy it with a new name when deploying. By default, Fly apps will be named with the scheme `pr-{number}-{repo_org}-{repo_name}`.
 
+This Action is a fork from https://github.com/superfly/fly-pr-review-apps to accomodate Fewlines' needs. Please use the official action if you can.
+
 ## Inputs
 
-| name       | description                                                                                                                                                                                              |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`     | The name of the Fly app. Alternatively, set the env `FLY_APP`. For safety, must include the PR number. Example: `myapp-pr-${{ github.event.number }}`. Defaults to `pr-{number}-{repo_org}-{repo_name}`. |
-| `region`   | Which Fly region to run the app in. Alternatively, set the env `FLY_REGION`. Defaults to `iad`.                                                                                                          |
-| `org`      | Which Fly organization to launch the app under. Alternatively, set the env `FLY_ORG`. Defaults to `personal`.                                                                                            |
-| `path`     | Path to run the `flyctl` commands from. Useful if you have an existing `fly.toml` in a subdirectory.                                                                                                     |
-| `postgres` | Optional name of an existing Postgres cluster to `flyctl postgres attach` to.                                                                                                                            |
-| `update`   | Whether or not to update this Fly app when the PR is updated. Default `true`.                                                                                                                            |
+| name        | description                                                                                                                                                                                              |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`      | The name of the Fly app. Alternatively, set the env `FLY_APP`. For safety, must include the PR number. Example: `myapp-pr-${{ github.event.number }}`. Defaults to `pr-{number}-{repo_org}-{repo_name}`. |
+| `region`    | Which Fly region to run the app in. Alternatively, set the env `FLY_REGION`. Defaults to `iad`.                                                                                                          |
+| `org`       | Which Fly organization to launch the app under. Alternatively, set the env `FLY_ORG`. Defaults to `personal`.                                                                                            |
+| `path`      | Path to run the `flyctl` commands from. Useful if you have an existing `fly.toml` in a subdirectory.                                                                                                     |
+| `postgres`  | Optional set to true to add a Postgres cluster to your review app.                                                                                                                            |
+| `pr_number` | Optional set the number of the PR (this is useful in the case of a GitHub Action using `workflow_dispatch` for instance).                                                                                                                                                                       |
+| `update`    | Whether or not to update this Fly app when the PR is updated. Default `true`.                                                                                                                            |
 
 ## Required Secrets
 
@@ -107,7 +110,7 @@ steps:
     id: deploy
     uses: fewlinesco/fly-staging-app@v1
     with:
-      postgres: myapp-postgres-staging-apps
+      postgres: true
 ```
 
 ## Example with multiple Fly apps
