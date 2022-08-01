@@ -22,6 +22,8 @@ inputs:
     description: Optionally attach the app to a pre-existing Postgres cluster on Fly
   pr_number:
     description: Optionnally explicitly set the PR number to use
+  event_type:
+    description: Optionnaly explicitly set the event type to use
   update:
     description: Whether new commits to the PR should re-deploy the Fly app
     default: true
