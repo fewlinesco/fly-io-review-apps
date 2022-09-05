@@ -28,6 +28,6 @@ inputs:
     description: Whether new commits to the PR should re-deploy the Fly app
     default: true
   secrets:
-    description: "Secrets to pass to the app, separated by semicolons (eg: \"SECRET1;SECRET2\")"
+    description: 'Secrets to pass to the app, separated by semicolons (eg: "SECRET1;SECRET2")'
   postgres_vm_size:
-    description: "Size of the Postgres VM to create (default: \"shared-cpu-1x\")"
+    description: 'Size of the Postgres VM to create (default: "shared-cpu-1x")'
