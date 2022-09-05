@@ -39,9 +39,9 @@ if [ "$EVENT_TYPE" = "closed" ]; then
   exit 0
 fi
 
-# Deploy the Fly app, creating it first if needed.
+# Create (using launch as create doesn't accept --region) the Fly app.
 if ! flyctl status --app "$app"; then
-  flyctl apps create --name "$app" --org "$org"
+  flyctl launch --copy-config --name "$app" --org "$org" --image "$image" --region "$region" --no-deploy
 fi
 
 # Attach postgres cluster to the app if specified.
@@ -52,20 +52,19 @@ if [ -n "$INPUT_POSTGRES" ]; then
   fi
 fi
 
+if [ "$INPUT_UPDATE" != "false" ]; then
+  flyctl deploy --app "$app" --image "$image" --region "$region" --strategy immediate
+fi
+
 if [ -n "$INPUT_SECRETS" ]; then
-  bash -c "fly secrets --app $app set $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
+  bash -c "flyctl secrets --app $app set $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
     value="${secret}"
     echo -n " $secret='${!value}' "
-  done)" || true
+  done) || true"
 fi
-
-if [ "$INPUT_UPDATE" != "false" ]; then
-  flyctl deploy --app "$app" --region "$region" --image "$image" --region "$region" --strategy immediate
-fi
-
 
 # Make some info available to the GitHub workflow.
-fly status --app "$app" --json >status.json
+flyctl status --app "$app" --json >status.json
 hostname=$(jq -r .Hostname status.json)
 appid=$(jq -r .ID status.json)
 echo "::set-output name=hostname::$hostname"
