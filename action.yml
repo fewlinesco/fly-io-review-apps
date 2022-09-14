@@ -26,8 +26,10 @@ inputs:
     description: Optionnaly explicitly set the event type to use
   update:
     description: Whether new commits to the PR should re-deploy the Fly app
-    default: true
+    default: "true"
   secrets:
     description: 'Secrets to pass to the app, separated by semicolons (eg: "SECRET1;SECRET2")'
   postgres_vm_size:
     description: 'Size of the Postgres VM to create (default: "shared-cpu-1x")'
+  postgres_cluster_regions:
+    description: 'Optionally create a PG cluster by giving more region to set Read Replicas, separated by a space. The leader will always be on the FLY_REGION and have a Read Replica. (eg: "ams ams" will add two replicas in Amsterdam)'
