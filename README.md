@@ -10,16 +10,17 @@ This Action is a fork from https://github.com/superfly/fly-pr-review-apps to acc
 
 ## Inputs
 
-| name         | description                                                                                                                                                                                              |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`       | The name of the Fly app. Alternatively, set the env `FLY_APP`. For safety, must include the PR number. Example: `myapp-pr-${{ github.event.number }}`. Defaults to `pr-{number}-{repo_org}-{repo_name}`. |
-| `region`     | Which Fly region to run the app in. Alternatively, set the env `FLY_REGION`. Defaults to `iad`.                                                                                                          |
-| `org`        | Which Fly organization to launch the app under. Alternatively, set the env `FLY_ORG`. Defaults to `personal`.                                                                                            |
-| `path`       | Path to run the `flyctl` commands from. Useful if you have an existing `fly.toml` in a subdirectory.                                                                                                     |
-| `postgres`   | Optional set to true to add a Postgres cluster to your review app.                                                                                                                                       |
-| `pr_number`  | Optional set the number of the PR (this is useful in the case of a GitHub Action using `workflow_dispatch` for instance).                                                                                |
-| `event_type` | Optional set the event_type of the PR (this is useful in the case of a GitHub Action using `workflow_dispatch` to specify a closed event for instance).                                                  |
-| `update`     | Whether or not to update this Fly app when the PR is updated. Default `true`.                                                                                                                            |
+| name                       | description                                                                                                                                                                                              |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                     | The name of the Fly app. Alternatively, set the env `FLY_APP`. For safety, must include the PR number. Example: `myapp-pr-${{ github.event.number }}`. Defaults to `pr-{number}-{repo_org}-{repo_name}`. |
+| `region`                   | Which Fly region to run the app in. Alternatively, set the env `FLY_REGION`. Defaults to `iad`.                                                                                                          |
+| `org`                      | Which Fly organization to launch the app under. Alternatively, set the env `FLY_ORG`. Defaults to `personal`.                                                                                            |
+| `path`                     | Path to run the `flyctl` commands from. Useful if you have an existing `fly.toml` in a subdirectory.                                                                                                     |
+| `postgres`                 | Optional set to true to add a Postgres cluster to your review app.                                                                                                                                       |
+| `postgres_cluster_regions` | Optional create a PG cluster by giving more region to set Read Replicas, separated by a space. The leader will always be on the FLY_REGION. (eg: "ams ams" will add two replicas in Amsterdam)           |
+| `pr_number`                | Optional set the number of the PR (this is useful in the case of a GitHub Action using `workflow_dispatch` for instance).                                                                                |
+| `event_type`               | Optional set the event_type of the PR (this is useful in the case of a GitHub Action using `workflow_dispatch` to specify a closed event for instance).                                                  |
+| `update`                   | Whether or not to update this Fly app when the PR is updated. Default `true`.                                                                                                                            |
 
 ## Required Secrets
 
@@ -98,9 +99,8 @@ jobs:
 
 ## Example with Postgres cluster
 
-If you have an existing [Fly Postgres cluster](https://fly.io/docs/reference/postgres/) you can attach it using the `postgres` action input. `flyctl postgres attach` will be used, which automatically creates a new database in the cluster named after the Fly app and sets `DATABASE_URL`.
-
-For production apps, it's a good idea to create a new Postgres cluster specifically for staging apps.
+If you want to add a Postgres instance to your review app, you can set `postgres` to `true` and it will create the cluster for you.
+For production apps, it's a good idea to create a new Postgres cluster specifically for review apps.
 
 ```yaml
 # ...
@@ -109,14 +109,49 @@ steps:
 
   - name: Deploy app
     id: deploy
-    uses: fewlinesco/fly-staging-app@v1
+    uses: fewlinesco/fly-review-app@v1
     with:
       postgres: true
 ```
 
+If you need a Postgres cluster for your review app, you can add regions to `postgres_cluster_regions` like so:
+
+```yaml
+# ...
+steps:
+  - uses: actions/checkout@v2
+
+  - name: Deploy app
+    id: deploy
+    uses: fewlinesco/fly-review-app@v1
+    with:
+      postgres: true
+      region: cdg
+      postgres_cluster_regions: "ams ams fra"
+```
+
+In this example, you would have a cluster of 4 databases instances with a leader in Paris (`cdg`) and 3 replicas: 2 in Amsterdam (`ams`) and 1 in Frankfurt (`fra`).
+Note that the leader will always be on the `region` (which defaults to `cdg` if you omit it).
+
+If you only wanted one leader and one replica:
+
+```yaml
+# ...
+steps:
+  - uses: actions/checkout@v2
+
+  - name: Deploy app
+    id: deploy
+    uses: fewlinesco/fly-review-app@v1
+    with:
+      postgres: true
+      region: cdg
+      postgres_cluster_regions: "ams"
+```
+
 ## Example with multiple Fly apps
 
-If you need to run multiple Fly apps per staging app, for example Redis, memcached, etc, just give each app a unique name. Your application code will need to be able to discover the app hostnames.
+If you need to run multiple Fly apps per reviw app, for example Redis, memcached, etc, just give each app a unique name. Your application code will need to be able to discover the app hostnames.
 
 Redis example:
 
@@ -125,7 +160,7 @@ steps:
   - uses: actions/checkout@v2
 
   - name: Deploy redis
-    uses: fewlinesco/fly-staging-app@v1
+    uses: fewlinesco/fly-review-app@v1
     with:
       update: false # Don't need to re-deploy redis when the PR is updated
       path: redis # Keep fly.toml in a subdirectory to avoid confusing flyctl
@@ -134,7 +169,7 @@ steps:
 
   - name: Deploy app
     id: deploy
-    uses: fewlinesco/fly-staging-app@v1
+    uses: fewlinesco/fly-review-app@v1
     with:
       name: pr-${{ github.event.number }}-myapp-app
 ```

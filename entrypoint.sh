@@ -52,6 +52,14 @@ if [ -n "$INPUT_POSTGRES" ]; then
   fi
 fi
 
+if [ -n "$INPUT_POSTGRES_CLUSTER_REGIONS" ]; then
+  for cluster_region in $(echo $INPUT_POSTGRES_CLUSTER_REGIONS); do
+    flyctl volumes create pg_data --app "$postgres_app" --size 10 --region "$cluster_region"
+  done
+  cluster_scale=$(echo "$INPUT_POSTGRES_CLUSTER_REGIONS" | awk '{print NF}')
+  flyctl scale count "$cluster_scale" --app "$postgres_app"
+fi
+
 if [ "$INPUT_UPDATE" != "false" ]; then
   flyctl deploy --app "$app" --image "$image" --region "$region" --strategy immediate
 fi
