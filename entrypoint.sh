@@ -59,10 +59,6 @@ if [ -n "$INPUT_POSTGRES_CLUSTER_REGIONS" ]; then
   done
   cluster_scale=$(echo "$region $region $INPUT_POSTGRES_CLUSTER_REGIONS" | awk '{print NF}')
 
-  echo "### DEBUG"
-  cat fly.toml
-  echo "### /DEBUG"
-
   flyctl scale count "$cluster_scale" --app "$postgres_app"
 fi
 

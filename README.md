@@ -10,17 +10,17 @@ This Action is a fork from https://github.com/superfly/fly-pr-review-apps to acc
 
 ## Inputs
 
-| name                       | description                                                                                                                                                                                              |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`                     | The name of the Fly app. Alternatively, set the env `FLY_APP`. For safety, must include the PR number. Example: `myapp-pr-${{ github.event.number }}`. Defaults to `pr-{number}-{repo_org}-{repo_name}`. |
-| `region`                   | Which Fly region to run the app in. Alternatively, set the env `FLY_REGION`. Defaults to `iad`.                                                                                                          |
-| `org`                      | Which Fly organization to launch the app under. Alternatively, set the env `FLY_ORG`. Defaults to `personal`.                                                                                            |
-| `path`                     | Path to run the `flyctl` commands from. Useful if you have an existing `fly.toml` in a subdirectory.                                                                                                     |
-| `postgres`                 | Optional set to true to add a Postgres cluster to your review app.                                                                                                                                       |
-| `postgres_cluster_regions` | Optional create a PG cluster by giving more region to set Read Replicas, separated by a space. The leader will always be on the FLY_REGION. (eg: "ams ams" will add two replicas in Amsterdam)           |
-| `pr_number`                | Optional set the number of the PR (this is useful in the case of a GitHub Action using `workflow_dispatch` for instance).                                                                                |
-| `event_type`               | Optional set the event_type of the PR (this is useful in the case of a GitHub Action using `workflow_dispatch` to specify a closed event for instance).                                                  |
-| `update`                   | Whether or not to update this Fly app when the PR is updated. Default `true`.                                                                                                                            |
+| name                       | description                                                                                                                                                                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                     | The name of the Fly app. Alternatively, set the env `FLY_APP`. For safety, must include the PR number. Example: `myapp-pr-${{ github.event.number }}`. Defaults to `pr-{number}-{repo_org}-{repo_name}`.               |
+| `region`                   | Which Fly region to run the app in. Alternatively, set the env `FLY_REGION`. Defaults to `iad`.                                                                                                                        |
+| `org`                      | Which Fly organization to launch the app under. Alternatively, set the env `FLY_ORG`. Defaults to `personal`.                                                                                                          |
+| `path`                     | Path to run the `flyctl` commands from. Useful if you have an existing `fly.toml` in a subdirectory.                                                                                                                   |
+| `postgres`                 | Optional set to true to add a Postgres cluster to your review app.                                                                                                                                                     |
+| `postgres_cluster_regions` | Optional create a PG cluster by giving more region to set Read Replicas, separated by a space. The leader will always be on the FLY_REGION and have a Read Replica. (eg: "ams ams" will add two replicas in Amsterdam) |
+| `pr_number`                | Optional set the number of the PR (this is useful in the case of a GitHub Action using `workflow_dispatch` for instance).                                                                                              |
+| `event_type`               | Optional set the event_type of the PR (this is useful in the case of a GitHub Action using `workflow_dispatch` to specify a closed event for instance).                                                                |
+| `update`                   | Whether or not to update this Fly app when the PR is updated. Default `true`.                                                                                                                                          |
 
 ## Required Secrets
 
