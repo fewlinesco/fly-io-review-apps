@@ -130,24 +130,8 @@ steps:
       postgres_cluster_regions: "ams ams fra"
 ```
 
-In this example, you would have a cluster of 4 databases instances with a leader in Paris (`cdg`) and 3 replicas: 2 in Amsterdam (`ams`) and 1 in Frankfurt (`fra`).
+In this example, you would have a cluster of 5 databases instances with a leader in Paris (`cdg`) and 4 replicas: 1 in Paris (`cdg`) 2 in Amsterdam (`ams`) and 1 in Frankfurt (`fra`).
 Note that the leader will always be on the `region` (which defaults to `cdg` if you omit it).
-
-If you only wanted one leader and one replica:
-
-```yaml
-# ...
-steps:
-  - uses: actions/checkout@v2
-
-  - name: Deploy app
-    id: deploy
-    uses: fewlinesco/fly-review-app@v1
-    with:
-      postgres: true
-      region: cdg
-      postgres_cluster_regions: "ams"
-```
 
 ## Example with multiple Fly apps
 
