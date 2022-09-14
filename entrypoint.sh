@@ -47,8 +47,8 @@ fi
 # Attach postgres cluster to the app if specified.
 if [ -n "$INPUT_POSTGRES" ]; then
   if ! flyctl status --app "$postgres_app"; then
-    flyctl postgres create --name "$postgres_app" --region "$region" --organization "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 1 || true
-    flyctl postgres attach --app "$app" --postgres-app "$postgres_app" || true
+    flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 1 || true
+    flyctl postgres attach --app "$app" "$postgres_app" || true
   fi
 fi
 
