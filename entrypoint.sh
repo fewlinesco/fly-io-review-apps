@@ -53,10 +53,11 @@ if [ -n "$INPUT_POSTGRES" ]; then
 fi
 
 if [ -n "$INPUT_POSTGRES_CLUSTER_REGIONS" ]; then
+  flyctl volumes create pg_data --app "$postgres_app" --size 10 --region "$region"
   for cluster_region in $(echo $INPUT_POSTGRES_CLUSTER_REGIONS); do
     flyctl volumes create pg_data --app "$postgres_app" --size 10 --region "$cluster_region"
   done
-  cluster_scale=$(echo "$region $INPUT_POSTGRES_CLUSTER_REGIONS" | awk '{print NF}')
+  cluster_scale=$(echo "$region $region $INPUT_POSTGRES_CLUSTER_REGIONS" | awk '{print NF}')
   flyctl scale count "$cluster_scale" --app "$postgres_app"
 fi
 
