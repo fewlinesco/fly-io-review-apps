@@ -47,20 +47,21 @@ fi
 # Attach postgres cluster to the app if specified.
 if [ -n "$INPUT_POSTGRES" ]; then
   if ! flyctl status --app "$postgres_app"; then
-    flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 1 || true
-    flyctl postgres attach --app "$app" "$postgres_app" || true
+    flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 1
+    if [ -n "$INPUT_POSTGRES_CLUSTER_REGIONS" ]; then
+      flyctl volumes create pg_data --app "$postgres_app" --size 10 --region "$region"
+      for cluster_region in $(echo $INPUT_POSTGRES_CLUSTER_REGIONS); do
+        flyctl volumes create pg_data --app "$postgres_app" --size 10 --region "$cluster_region"
+      done
+      cluster_scale=$(echo "$region $region $INPUT_POSTGRES_CLUSTER_REGIONS" | awk '{print NF}')
+
+      flyctl scale count "$cluster_scale" --app "$postgres_app"
+    fi
   fi
+  flyctl postgres attach --app "$app" "$postgres_app" || true
 fi
 
-if [ -n "$INPUT_POSTGRES_CLUSTER_REGIONS" ]; then
-  flyctl volumes create pg_data --app "$postgres_app" --size 10 --region "$region"
-  for cluster_region in $(echo $INPUT_POSTGRES_CLUSTER_REGIONS); do
-    flyctl volumes create pg_data --app "$postgres_app" --size 10 --region "$cluster_region"
-  done
-  cluster_scale=$(echo "$region $region $INPUT_POSTGRES_CLUSTER_REGIONS" | awk '{print NF}')
 
-  flyctl scale count "$cluster_scale" --app "$postgres_app"
-fi
 
 if [ "$INPUT_UPDATE" != "false" ]; then
   flyctl deploy --app "$app" --image "$image" --region "$region" --strategy immediate
