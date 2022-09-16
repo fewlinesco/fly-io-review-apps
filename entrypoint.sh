@@ -61,10 +61,8 @@ if [ -n "$INPUT_POSTGRES" ]; then
   flyctl postgres attach --app "$app" "$postgres_app" || true
 fi
 
-
-
 if [ "$INPUT_UPDATE" != "false" ]; then
-  flyctl deploy --app "$app" --image "$image" --region "$region" --strategy immediate
+  flyctl deploy --app "$app" --image "$image" --region "$region" --strategy rolling
 fi
 
 if [ -n "$INPUT_SECRETS" ]; then
