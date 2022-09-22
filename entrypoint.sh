@@ -56,10 +56,7 @@ if [ -n "$INPUT_POSTGRES" ]; then
       cluster_scale=$(echo "$region $region $INPUT_POSTGRES_CLUSTER_REGIONS" | awk '{print NF}')
 
       cp fly.toml fly-postgres.toml
-      ls
-      cat fly-postgres.toml
       sed -i "s/app = \"$app\"/app = \"$postgres_app\"/" fly-postgres.toml
-      cat fly-postgres.toml
 
       flyctl scale count "$cluster_scale" --app "$postgres_app" --config fly-postgres.toml
     fi
