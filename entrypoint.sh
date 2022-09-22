@@ -41,7 +41,7 @@ fi
 
 # Create (using launch as create doesn't accept --region) the Fly app.
 if ! flyctl status --app "$app"; then
-  flyctl launch --copy-config --name "$app" --org "$org" --image "$image" --region "$region" --no-deploy
+  flyctl launch --name "$app" --org "$org" --image "$image" --region "$region" --no-deploy
 fi
 
 # Attach postgres cluster to the app if specified.
