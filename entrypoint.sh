@@ -41,7 +41,7 @@ fi
 
 # Create (using launch as create doesn't accept --region) the Fly app.
 if ! flyctl status --app "$app"; then
-  flyctl launch --name "$app" --org "$org" --image "$image" --region "$region" --no-deploy
+  flyctl launch --copy-config --name "$app" --org "$org" --image "$image" --region "$region" --no-deploy
 fi
 
 # Attach postgres cluster to the app if specified.
@@ -55,7 +55,10 @@ if [ -n "$INPUT_POSTGRES" ]; then
       done
       cluster_scale=$(echo "$region $region $INPUT_POSTGRES_CLUSTER_REGIONS" | awk '{print NF}')
 
-      flyctl scale count "$cluster_scale" --app "$postgres_app"
+      cp fly.toml fly-postgres.toml
+      sed -i "s/app = \"$app\"/app = \"$postgres_app\"/" fly-postgres.toml
+
+      flyctl scale count "$cluster_scale" --app "$postgres_app" --config fly-postgres.toml
     fi
   fi
   flyctl postgres attach --app "$app" "$postgres_app" || true
