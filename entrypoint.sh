@@ -50,7 +50,7 @@ if [ -n "$INPUT_POSTGRES" ]; then
     flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 1
     if [ -n "$INPUT_POSTGRES_CLUSTER_REGIONS" ]; then
       # flyctl volumes create pg_data --app "$postgres_app" --size 10 --region "$region"
-      machine_id=$(flyctl machine list -a $postgres_app --json | jq '.[0].id')
+      machine_id=$(flyctl machine list -a $postgres_app --json | jq --raw-output  '.[0].id')
       for cluster_region in $(echo $INPUT_POSTGRES_CLUSTER_REGIONS); do
         # flyctl volumes create pg_data --app "$postgres_app" --size 10 --region "$cluster_region"
         flyctl machine clone ${machine_id} --region $cluster_region --app $postgres_app
