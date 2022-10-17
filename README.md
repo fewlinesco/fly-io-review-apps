@@ -58,7 +58,7 @@ jobs:
 
       - name: Deploy
         id: deploy
-        uses: fewlinesco/fly-io-review-apps@v2.6
+        uses: fewlinesco/fly-io-review-apps@v2.7
 ```
 
 ## Cleaning up GitHub environments
@@ -86,7 +86,7 @@ jobs:
 
       - name: Deploy app
         id: deploy
-        uses: fewlinesco/fly-io-review-apps@v2.6
+        uses: fewlinesco/fly-io-review-apps@v2.7
 
       - name: Clean up GitHub environment
         uses: strumwolf/delete-deployment-environment@v2
@@ -111,7 +111,7 @@ steps:
 
   - name: Deploy app
     id: deploy
-    uses: fewlinesco/fly-io-review-apps@v2.6
+    uses: fewlinesco/fly-io-review-apps@v2.7
     with:
       postgres: true
 ```
@@ -125,7 +125,7 @@ steps:
 
   - name: Deploy app
     id: deploy
-    uses: fewlinesco/fly-io-review-apps@v2.6
+    uses: fewlinesco/fly-io-review-apps@v2.7
     with:
       postgres: true
       region: cdg
@@ -146,7 +146,7 @@ steps:
   - uses: actions/checkout@v3
 
   - name: Deploy redis
-    uses: fewlinesco/fly-io-review-apps@v2.6
+    uses: fewlinesco/fly-io-review-apps@v2.7
     with:
       update: false # Don't need to re-deploy redis when the PR is updated
       path: redis # Keep fly.toml in a subdirectory to avoid confusing flyctl
@@ -155,7 +155,7 @@ steps:
 
   - name: Deploy app
     id: deploy
-    uses: fewlinesco/ffly-io-review-apps@v2.6
+    uses: fewlinesco/ffly-io-review-apps@v2.7
     with:
       name: pr-${{ github.event.number }}-myapp-app
 ```
