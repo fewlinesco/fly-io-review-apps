@@ -58,7 +58,7 @@ jobs:
 
       - name: Deploy
         id: deploy
-        uses: fewlinesco/fly-io-review-apps@v2.7
+        uses: fewlinesco/fly-io-review-apps@v2.8
 ```
 
 ## Cleaning up GitHub environments
