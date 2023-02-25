@@ -47,7 +47,7 @@ fi
 # Attach postgres cluster to the app if specified.
 if [ -n "$INPUT_POSTGRES" ]; then
   if ! flyctl status --app "$postgres_app"; then
-    flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 1
+    db_output=$(flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 1 | grep "Connection string")
     if [ -n "$INPUT_POSTGRES_CLUSTER_REGIONS" ]; then
       machine_id=$(flyctl machine list -a $postgres_app --json | jq --raw-output  '.[0].id')
 
@@ -58,7 +58,13 @@ if [ -n "$INPUT_POSTGRES" ]; then
         flyctl machine clone ${machine_id} --region $cluster_region --app $postgres_app
       done
     fi
+
+    # Fix until Prisma can deal with IPv6 or Fly gives us something else
+    connection_string=$(echo $db_output | sed -e 's/[[:space:]]*Connection string:[[:space:]]*//g')
+    new_connection_string=$(echo $connection_string | sed -e "s/\[.*\]/${postgres_app}.internal/g")
+    flyctl secrets --app $app set DATABASE_URL=$new_connection_string || true
   fi
+
   flyctl postgres attach --app "$app" "$postgres_app" || true
 fi
 
