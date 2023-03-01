@@ -20,7 +20,7 @@ EVENT_TYPE=${INPUT_EVENT_TYPE:-$(jq -r .action /github/workflow/event.json)}
 # Default the Fly app name to pr-{number}-{repo_owner}-{repo_name}
 app="${INPUT_NAME:-pr-$PR_NUMBER-$REPO_OWNER-$REPO_NAME}"
 postgres_app="${INPUT_POSTGRES_NAME:-pr-$PR_NUMBER-$REPO_OWNER-$REPO_NAME-postgres}"
-region="${INPUT_REGION:-${FLY_REGION:-lhr}}"
+region="${INPUT_REGION:-${FLY_REGION:-cdg}}"
 org="${INPUT_ORG:-${FLY_ORG:-personal}}"
 image="$INPUT_IMAGE"
 postgres_vm_size="${INPUT_POSTGRES_VM_SIZE:-shared-cpu-1x}"
@@ -69,15 +69,15 @@ if [ -n "$INPUT_POSTGRES" ]; then
   flyctl postgres attach --app "$app" "$postgres_app" || true
 fi
 
+if [ "$INPUT_UPDATE" != "false" ]; then
+  flyctl deploy --app "$app" --image "$image" --region "$region" --strategy bluegreen
+fi
+
 if [ -n "$INPUT_SECRETS" ]; then
   bash -c "flyctl secrets --app $app set $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
     value="${secret}"
     echo -n " $secret='${!value}' "
   done) || true"
-fi
-
-if [ "$INPUT_UPDATE" != "false" ]; then
-  flyctl deploy --app "$app" --image "$image" --region "$region" --strategy bluegreen
 fi
 
 # Make some info available to the GitHub workflow.
