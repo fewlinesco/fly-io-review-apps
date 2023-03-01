@@ -69,15 +69,15 @@ if [ -n "$INPUT_POSTGRES" ]; then
   flyctl postgres attach --app "$app" "$postgres_app" || true
 fi
 
-if [ "$INPUT_UPDATE" != "false" ]; then
-  flyctl deploy --app "$app" --image "$image" --region "$region" --strategy bluegreen
-fi
-
 if [ -n "$INPUT_SECRETS" ]; then
   bash -c "flyctl secrets --app $app set $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
     value="${secret}"
     echo -n " $secret='${!value}' "
   done) || true"
+fi
+
+if [ "$INPUT_UPDATE" != "false" ]; then
+  flyctl deploy --app "$app" --image "$image" --region "$region" --strategy bluegreen
 fi
 
 # Make some info available to the GitHub workflow.
