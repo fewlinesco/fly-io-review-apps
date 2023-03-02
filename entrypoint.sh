@@ -61,8 +61,9 @@ if [ -n "$INPUT_POSTGRES" ]; then
     fi
 
     # Fix until Prisma can deal with IPv6 or Fly gives us something else
-    connection_string=$(echo $db_output | sed -e 's/\.flycast/.internal/g')
-    flyctl secrets --app $app set DATABASE_URL=$connection_string || true
+    connection_string=$(echo $db_output | sed -e 's/[[:space:]]*Connection string:[[:space:]]*//g')
+    new_connection_string=$(echo $connection_string | sed -e "s/\.flycast/.internal/g")
+    flyctl secrets --app $app set DATABASE_URL=$new_connection_string || true
   fi
 
   flyctl postgres attach --app "$app" "$postgres_app" || true
