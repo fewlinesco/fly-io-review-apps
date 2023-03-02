@@ -39,47 +39,47 @@ if [ "$EVENT_TYPE" = "closed" ]; then
   exit 0
 fi
 
-# Create (using launch as create doesn't accept --region) the Fly app.
+# Create (using launch as create doesn't accept --region) the Fly app OR update the existing one.
 if ! flyctl status --app "$app"; then
   flyctl launch --copy-config --name "$app" --org "$org" --image "$image" --region "$region" --no-deploy
   flyctl scale count 2 --app "$app"
-fi
 
-# Attach postgres cluster to the app if specified.
-if [ -n "$INPUT_POSTGRES" ]; then
-  if ! flyctl status --app "$postgres_app"; then
-    db_output=$(flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 1 | grep "Connection string")
-    if [ -n "$INPUT_POSTGRES_CLUSTER_REGIONS" ]; then
-      machine_id=$(flyctl machine list -a $postgres_app --json | jq --raw-output  '.[0].id')
+  # if PostgreSQL is requested, create a PostgreSQL App then Deploy Application
+  if [ -n "$INPUT_POSTGRES" ]; then
+    if ! flyctl status --app "$postgres_app"; then
+      db_output=$(flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 1 | grep "Connection string")
+      # Create a PostgreSQL cluster if requested
+      if [ -n "$INPUT_POSTGRES_CLUSTER_REGIONS" ]; then
+        machine_id=$(flyctl machine list -a $postgres_app --json | jq --raw-output  '.[0].id')
 
-      # Creating the first replica on the same region to have at least one replica
-      flyctl machine clone ${machine_id} --region $region --app $postgres_app
+        # Creating the first replica on the same region to have at least one replica
+        flyctl machine clone ${machine_id} --region $region --app $postgres_app
 
-      for cluster_region in $(echo $INPUT_POSTGRES_CLUSTER_REGIONS); do
-        flyctl machine clone ${machine_id} --region $cluster_region --app $postgres_app
-      done
+        for cluster_region in $(echo $INPUT_POSTGRES_CLUSTER_REGIONS); do
+          flyctl machine clone ${machine_id} --region $cluster_region --app $postgres_app
+        done
+      fi
+
+      flyctl postgres attach --app "$app" "$postgres_app" || true
+
+      # Fix until Prisma can deal with IPv6 or Fly gives us something else
+      connection_string=$(echo $db_output | sed -e 's/[[:space:]]*Connection string:[[:space:]]*//g')
+      new_connection_string=$(echo $connection_string | sed -e "s/\.flycast/.internal/g")
+      bash -c "flyctl deploy --app "$app" --image "$image" --region "$region" --env DATABASE_URL=$new_connection_string $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
+        value="${secret}"
+        echo -n "--env $secret='${!value}' "
+      done) || true"
     fi
-
-    # Fix until Prisma can deal with IPv6 or Fly gives us something else
-    connection_string=$(echo $db_output | sed -e 's/[[:space:]]*Connection string:[[:space:]]*//g')
-    new_connection_string=$(echo $connection_string | sed -e "s/\.flycast/.internal/g")
-    flyctl secrets --app $app set DATABASE_URL=$new_connection_string || true
+  else # If PostgreSQL is not requested, just deploy the application
+    flyctl deploy --app "$app" --image "$image" --region "$region"
   fi
-
-  flyctl postgres attach --app "$app" "$postgres_app" || true
-fi
-
-if [ "$INPUT_UPDATE" != "false" ]; then
-  connection_string=$(echo $db_output | sed -e 's/[[:space:]]*Connection string:[[:space:]]*//g')
-  new_connection_string=$(echo $connection_string | sed -e "s/\.flycast/.internal/g")
-  flyctl deploy --app "$app" --env DATABASE_URL=$new_connection_string --image "$image" --region "$region" --strategy immediate
-fi
-
-if [ -n "$INPUT_SECRETS" ]; then
-  bash -c "flyctl secrets --app $app set $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
-    value="${secret}"
-    echo -n " $secret='${!value}' "
-  done) || true"
+else # If the App already exists, deploy it again and reset secrets
+  if [ "$INPUT_UPDATE" != "false" ]; then
+    bash -c "flyctl deploy --app "$app" --image "$image" --region "$region" --strategy bluegreen $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
+      value="${secret}"
+      echo -n "--env $secret='${!value}' "
+    done) || true"
+  fi
 fi
 
 # Make some info available to the GitHub workflow.
