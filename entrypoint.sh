@@ -70,7 +70,7 @@ if [ -n "$INPUT_POSTGRES" ]; then
 fi
 
 if [ "$INPUT_UPDATE" != "false" ]; then
-  flyctl deploy --app "$app" --image "$image" --region "$region" --strategy bluegreen
+  flyctl deploy --app "$app" --image "$image" --region "$region" --strategy immediate
 fi
 
 if [ -n "$INPUT_SECRETS" ]; then
