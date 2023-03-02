@@ -65,10 +65,10 @@ if ! flyctl status --app "$app"; then
       # Fix until Prisma can deal with IPv6 or Fly gives us something else
       connection_string=$(echo $db_output | sed -e 's/[[:space:]]*Connection string:[[:space:]]*//g')
       new_connection_string=$(echo $connection_string | sed -e "s/\.flycast/.internal/g")
-      bash -c "flyctl deploy --app "$app" --image "$image" --region "$region" --env DATABASE_URL=$new_connection_string $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
+      bash -c "flyctl deploy --app "$app" --image "$image" --region "$region" --env DATABASE_URL="$new_connection_string" $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
         value="${secret}"
         echo -n "--env $secret='${!value}' "
-      done) || true"
+      done)"
     fi
   else # If PostgreSQL is not requested, just deploy the application
     flyctl deploy --app "$app" --image "$image" --region "$region"
@@ -78,7 +78,7 @@ else # If the App already exists, deploy it again and reset secrets
     bash -c "flyctl deploy --app "$app" --image "$image" --region "$region" --strategy bluegreen $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
       value="${secret}"
       echo -n "--env $secret='${!value}' "
-    done) || true"
+    done)"
   fi
 fi
 
