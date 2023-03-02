@@ -70,7 +70,9 @@ if [ -n "$INPUT_POSTGRES" ]; then
 fi
 
 if [ "$INPUT_UPDATE" != "false" ]; then
-  flyctl deploy --app "$app" --image "$image" --region "$region" --strategy immediate
+  connection_string=$(echo $db_output | sed -e 's/[[:space:]]*Connection string:[[:space:]]*//g')
+  new_connection_string=$(echo $connection_string | sed -e "s/\.flycast/.internal/g")
+  flyctl deploy --app "$app" --env DATABASE_URL=$new_connection_string --image "$image" --region "$region" --strategy immediate
 fi
 
 if [ -n "$INPUT_SECRETS" ]; then
