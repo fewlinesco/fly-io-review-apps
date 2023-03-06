@@ -42,7 +42,6 @@ fi
 # Create (using launch as create doesn't accept --region) the Fly app OR update the existing one.
 if ! flyctl status --app "$app"; then
   flyctl launch --force-machines --copy-config --name "$app" --org "$org" --image "$image" --region "$region" --no-deploy
-  flyctl scale count 2 --app "$app"
   flyctl ips allocate-v4 --app "$app" --region "$region" --shared
   flyctl ips allocate-v6 --app "$app"
 
@@ -76,7 +75,17 @@ if ! flyctl status --app "$app"; then
   else # If PostgreSQL is not requested, just deploy the application
     flyctl deploy --app "$app" --image "$image" --region "$region"
   fi
-else # If the App already exists, deploy it again and reset secrets
+
+  # Set secrets once and for all future deployments
+  bash -c "flyctl secrets set --app "\""$app"\"" DATABASE_URL="\""$new_connection_string"\"" $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
+    value="${secret}"
+    echo -n " $secret='${!value}' "
+  done) || true"
+
+  # Scale the app to 2 instances
+  flyctl scale count 2 --app "$app"
+else 
+  # If the App already exists, deploy it again and reset secrets
   if [ "$INPUT_UPDATE" != "false" ]; then
     bash -c "flyctl deploy --app "\""$app"\"" --image "\""$image"\"" --region "\""$region"\"" --strategy bluegreen $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
       value="${secret}"
