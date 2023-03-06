@@ -41,14 +41,16 @@ fi
 
 # Create (using launch as create doesn't accept --region) the Fly app OR update the existing one.
 if ! flyctl status --app "$app"; then
-  flyctl launch --copy-config --name "$app" --org "$org" --image "$image" --region "$region" --no-deploy
+  flyctl launch --force-machines --copy-config --name "$app" --org "$org" --image "$image" --region "$region" --no-deploy
   flyctl scale count 2 --app "$app"
+  flyctl ips allocate-v4 --app "$app" --region "$region" --shared
+  flyctl ips allocate-v6 --app "$app" --region "$region"
 
   # if PostgreSQL is requested, create a PostgreSQL App then Deploy Application
   if [ -n "$INPUT_POSTGRES" ]; then
     if ! flyctl status --app "$postgres_app"; then
-      db_output=$(flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 1 | grep "Connection string")
-      # Create a PostgreSQL cluster if requested
+      db_output=$(flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 2 | grep "Connection string")
+      # Create additional PostgreSQL read replicas
       if [ -n "$INPUT_POSTGRES_CLUSTER_REGIONS" ]; then
         machine_id=$(flyctl machine list -a $postgres_app --json | jq --raw-output  '.[0].id')
 
