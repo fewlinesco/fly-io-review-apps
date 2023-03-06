@@ -43,8 +43,6 @@ fi
 if ! flyctl status --app "$app"; then
   flyctl launch --force-machines --copy-config --name "$app" --org "$org" --image "$image" --region "$region" --no-deploy
   flyctl scale count 2 --app "$app"
-  flyctl ips allocate-v4 --app "$app" --region "$region" --shared
-  flyctl ips allocate-v6 --app "$app"
 
   # if PostgreSQL is requested, create a PostgreSQL App then Deploy Application
   if [ -n "$INPUT_POSTGRES" ]; then
