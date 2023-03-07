@@ -76,7 +76,7 @@ if ! flyctl status --app "$app"; then
     flyctl deploy --app "$app" --image "$image" --region "$region"
   fi
 
-  # Set current secrets for future deployments (otherwise they are not persisted)
+  # Set current secrets for future deployments as they are not persisted when used with --env above
   bash -c "flyctl secrets set --app "\""$app"\"" DATABASE_URL="\""$new_connection_string"\"" $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
     value="${secret}"
     echo -n " $secret='${!value}' "
@@ -85,14 +85,14 @@ if ! flyctl status --app "$app"; then
   # Scale the app to 2 instances
   flyctl scale count 2 --app "$app"
 else 
-  # If the App already exists, deploy it again with secrets
+  # If the App already exists, deploy it again with secrets as they may have changed
   if [ "$INPUT_UPDATE" != "false" ]; then
     bash -c "flyctl deploy --app "\""$app"\"" --image "\""$image"\"" --region "\""$region"\"" --strategy bluegreen $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
       value="${secret}"
       echo -n "--env $secret='${!value}' "
     done)"
 
-    # Still need to re-set secrets for future deployments as they may have changed
+    # Still need to re-set secrets for future deployments as they are not persisted when used with --env above
     bash -c "flyctl secrets set --app "\""$app"\"" $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
       value="${secret}"
       echo -n " $secret='${!value}' "
