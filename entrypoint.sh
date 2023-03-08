@@ -102,10 +102,8 @@ else
 fi
 
 # Make some info available to the GitHub workflow.
-flyctl status --app "$app" --json >status.json
-hostname=$(jq -r .Hostname status.json)
-appid=$(jq -r .ID status.json)
+hostname=$(flyctl status --app "$app" | grep Hostname | sed -e 's/[[:space:]]*Hostname =[[:space:]]*//g')
 
 echo "hostname=$hostname" >> $GITHUB_OUTPUT
 echo "url=https://$hostname" >> $GITHUB_OUTPUT
-echo "id=$appid" >> $GITHUB_OUTPUT
+echo "id=$app" >> $GITHUB_OUTPUT
