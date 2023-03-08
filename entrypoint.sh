@@ -51,13 +51,13 @@ if ! flyctl status --app "$app"; then
       db_output=$(flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 2 | grep "Connection string")
       # Create additional PostgreSQL read replicas
       if [ -n "$INPUT_POSTGRES_CLUSTER_REGIONS" ]; then
-        machine_id=$(flyctl machine list -a $postgres_app --json | jq --raw-output  '.[0].id')
+        pg_machine_id=$(flyctl machine list -a $postgres_app --json | jq --raw-output  '.[0].id')
 
         # Creating the first replica on the same region to have at least one replica
-        flyctl machine clone ${machine_id} --region $region --app $postgres_app
+        flyctl machine clone ${pg_machine_id} --region $region --app $postgres_app
 
         for cluster_region in $(echo $INPUT_POSTGRES_CLUSTER_REGIONS); do
-          flyctl machine clone ${machine_id} --region $cluster_region --app $postgres_app
+          flyctl machine clone ${pg_machine_id} --region $cluster_region --app $postgres_app
         done
       fi
 
@@ -83,11 +83,12 @@ if ! flyctl status --app "$app"; then
   done) || true"
 
   # Scale the app to 2 instances
-  flyctl scale count 2 --app "$app"
+  app_machine_id=$(flyctl machine list -a $app --json | jq --raw-output  '.[0].id')
+  flyctl machine clone ${app_machine_id} --region $region --app $app
 else 
   # If the App already exists, deploy it again with secrets as they may have changed
   if [ "$INPUT_UPDATE" != "false" ]; then
-    bash -c "flyctl deploy --app "\""$app"\"" --image "\""$image"\"" --region "\""$region"\"" --strategy bluegreen $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
+    bash -c "flyctl deploy --app "\""$app"\"" --image "\""$image"\"" --region "\""$region"\"" --strategy rolling $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
       value="${secret}"
       echo -n "--env $secret='${!value}' "
     done)"
@@ -101,10 +102,8 @@ else
 fi
 
 # Make some info available to the GitHub workflow.
-flyctl status --app "$app" --json >status.json
-hostname=$(jq -r .Hostname status.json)
-appid=$(jq -r .ID status.json)
+hostname=$(flyctl status --app "$app" | grep Hostname | sed -e 's/[[:space:]]*Hostname =[[:space:]]*//g')
 
 echo "hostname=$hostname" >> $GITHUB_OUTPUT
 echo "url=https://$hostname" >> $GITHUB_OUTPUT
-echo "id=$appid" >> $GITHUB_OUTPUT
+echo "id=$app" >> $GITHUB_OUTPUT
