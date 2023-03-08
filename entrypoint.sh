@@ -48,7 +48,7 @@ if ! flyctl status --app "$app"; then
   # if PostgreSQL is requested, create a PostgreSQL App then Deploy Application
   if [ -n "$INPUT_POSTGRES" ]; then
     if ! flyctl status --app "$postgres_app"; then
-      db_output=$(flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 2 | grep "Connection string")
+      flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 2
       # Create additional PostgreSQL read replicas
       if [ -n "$INPUT_POSTGRES_CLUSTER_REGIONS" ]; then
         pg_machine_id=$(flyctl machine list -a $postgres_app --json | jq --raw-output  '.[0].id')
@@ -61,11 +61,11 @@ if ! flyctl status --app "$app"; then
         done
       fi
 
-      flyctl postgres attach --app "$app" "$postgres_app" || true
+      db_output=$(flyctl postgres attach --app "$app" "$postgres_app" | grep "DATABASE_URL")
 
       # Fix until Prisma can deal with IPv6 or Fly gives us something else
       # see https://github.com/prisma/prisma/issues/18079
-      connection_string=$(echo $db_output | sed -e 's/[[:space:]]*Connection string:[[:space:]]*//g')
+      connection_string=$(echo $db_output | sed -e 's/[[:space:]]*DATABASE_URL=//g')
       new_connection_string=$(echo $connection_string | sed -e "s/\.flycast/.internal/g")
       bash -c "flyctl deploy --app "\""$app"\"" --image "\""$image"\"" --region "\""$region"\"" --env DATABASE_URL="\""$new_connection_string"\"" $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
         value="${secret}"
@@ -85,7 +85,7 @@ if ! flyctl status --app "$app"; then
   # Scale the app to 2 instances
   app_machine_id=$(flyctl machine list -a $app --json | jq --raw-output  '.[0].id')
   flyctl machine clone ${app_machine_id} --region $region --app $app
-else 
+else
   # If the App already exists, deploy it again with secrets as they may have changed
   if [ "$INPUT_UPDATE" != "false" ]; then
     bash -c "flyctl deploy --app "\""$app"\"" --image "\""$image"\"" --region "\""$region"\"" --strategy rolling $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
