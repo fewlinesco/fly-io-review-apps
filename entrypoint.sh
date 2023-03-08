@@ -87,7 +87,7 @@ if ! flyctl status --app "$app"; then
 else 
   # If the App already exists, deploy it again with secrets as they may have changed
   if [ "$INPUT_UPDATE" != "false" ]; then
-    bash -c "flyctl deploy --app "\""$app"\"" --image "\""$image"\"" --region "\""$region"\"" --strategy bluegreen $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
+    bash -c "flyctl deploy --app "\""$app"\"" --image "\""$image"\"" --region "\""$region"\"" --strategy rolling $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
       value="${secret}"
       echo -n "--env $secret='${!value}' "
     done)"
