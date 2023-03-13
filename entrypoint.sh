@@ -42,7 +42,7 @@ fi
 # Create (using launch as create doesn't accept --region) the Fly app OR update the existing one.
 if ! flyctl status --app "$app"; then
   flyctl launch --force-machines --copy-config --name "$app" --org "$org" --image "$image" --region "$region" --no-deploy
-  flyctl ips allocate-v4 --app "$app" --region "$region" --shared
+  flyctl ips allocate-v4 --app "$app" --region "$region" --shared --yes
   flyctl ips allocate-v6 --app "$app"
 
   # if PostgreSQL is requested, create a PostgreSQL App then Deploy Application
