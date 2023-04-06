@@ -66,8 +66,9 @@ if ! flyctl status --app "$app"; then
       # Fix until Prisma can deal with IPv6 or Fly gives us something else
       # see https://github.com/prisma/prisma/issues/18079
       connection_string=$(echo $db_output | sed -e 's/[[:space:]]*DATABASE_URL=//g')
-      new_connection_string=$(echo $connection_string | sed -e "s/\.flycast/.internal/g")
-      bash -c "flyctl deploy --app "\""$app"\"" --image "\""$image"\"" --region "\""$region"\"" --env DATABASE_URL="\""$new_connection_string"\"" $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
+      database_url_write=$(echo $connection_string | sed -e "s/\.flycast/.internal/g")
+      database_url_read=$(echo $connection_string | sed -e "s/5432/5433/g")
+      bash -c "flyctl deploy --app "\""$app"\"" --image "\""$image"\"" --region "\""$region"\"" --env DATABASE_URL="\""$database_url_write"\"" --env DATABASE_URL_WRITE="\""$database_url_write"\"" --env DATABASE_URL_READ="\""$database_url_read"\"" $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
         value="${secret}"
         echo -n "--env $secret='${!value}' "
       done)"
@@ -77,7 +78,7 @@ if ! flyctl status --app "$app"; then
   fi
 
   # Set current secrets for future deployments as they are not persisted when used with --env above
-  bash -c "flyctl secrets set --app "\""$app"\"" DATABASE_URL="\""$new_connection_string"\"" $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
+  bash -c "flyctl secrets set --app "\""$app"\"" DATABASE_URL="\""$database_url_write"\"" DATABASE_URL_WRITE="\""$database_url_write"\"" DATABASE_URL_READ="\""$database_url_read"\"" $(for secret in $(echo $INPUT_SECRETS | tr ";" "\n") ; do
     value="${secret}"
     echo -n " $secret='${!value}' "
   done) || true"
