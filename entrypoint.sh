@@ -48,7 +48,7 @@ if ! flyctl status --app "$app"; then
   # if PostgreSQL is requested, create a PostgreSQL App then Deploy Application
   if [ -n "$INPUT_POSTGRES" ]; then
     if ! flyctl status --app "$postgres_app"; then
-      flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 2
+      flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size "$postgres_vm_size" --volume-size 1 --initial-cluster-size 1
       # Create additional PostgreSQL read replicas
       if [ -n "$INPUT_POSTGRES_CLUSTER_REGIONS" ]; then
         pg_machine_id=$(flyctl machine list -a $postgres_app --json | jq --raw-output  '.[0].id')
